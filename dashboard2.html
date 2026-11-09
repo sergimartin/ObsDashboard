@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Observatorio Dashboard Multi-Setup</title>
+    <style>
+        :root {
+            --bg-color: #0f0f11;
+            --card-bg: #18181c;
+            --input-bg: #222227;
+            --accent: #e54b4b;
+            --text-main: #e0e0e0;
+            --text-muted: #8a8a93;
+            --border: #2c2c34;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        h1 { font-size: 1.2rem; color: var(--accent); margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+        
+        button {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button.btn-save {
+            background: var(--accent);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 10px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-top: 15px;
+        }
+
+        button.btn-add {
+            background: #2a472a;
+            border: 1px solid #4CAF50;
+            color: #fff;
+            margin-bottom: 15px;
+            width: 100%;
+            padding: 8px;
+            font-weight: bold;
+        }
+
+        button.btn-del {
+            background: #472a2a;
+            border: 1px solid #f44336;
+            color: #ff9999;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            float: right;
+        }
+
+        /* Formulario Modal / Sección Config */
+        #config-panel {
+            display: none;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .setup-config-block {
+            background: #121215;
+            border: 1px dashed var(--border);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: #fff;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        /* Grid Layout para los Setups */
+        .grid-setups {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .card-header {
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 5px;
+            color: var(--accent);
+        }
+
+        .preview-box {
+            width: 100%;
+            height: 160px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+
+        .preview-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .telemetry-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+
+        .telemetry-label { color: var(--text-muted); }
+        .telemetry-val { font-family: monospace; }
+
+        .grid-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .img-card img {
+            width: 100%;
+            border-radius: 4px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 id="obs-title">OBSERVATORIO</h1>
+        <button onclick="toggleConfig()">⚙ Configuración</button>
+    </header>
+
+    <!-- FORMULARIO DE CONFIGURACIÓN -->
+    <div id="config-panel">
+        <div class="form-group">
+            <label>Nombre del Observatorio</label>
+            <input type="text" id="cfg-obs-name" value="Periconet">
+        </div>
+
+        <h3 style="margin-top:20px;">Setups Configurados</h3>
+        <div id="setups-config-list">
+            <!-- Form bloques de setups dinámicos -->
+        </div>
+
+        <button class="btn-add" onclick="addSetupForm()">+ Añadir otro Setup</button>
+
+        <h3>Imágenes adicionales (Seeing / All-Sky)</h3>
+        <div class="form-group">
+            <label>Título Imagen 1</label>
+            <input type="text" id="cfg-img1-title" value="Voldemort d'Àger">
+            <label style="margin-top:5px;">URL Imagen 1</label>
+            <input type="text" id="cfg-img1-url" placeholder="https://...">
+        </div>
+
+        <div class="form-group">
+            <label>Título Imagen 2</label>
+            <input type="text" id="cfg-img2-title" value="Allsky AstroZapo">
+            <label style="margin-top:5px;">URL Imagen 2</label>
+            <input type="text" id="cfg-img2-url" placeholder="https://...">
+        </div>
+
+        <button class="btn-save" onclick="saveConfig()">Guardar Configuración</button>
+    </div>
+
+    <!-- DASHBOARD PANEL -->
+    <main>
+        <!-- RENDER DINÁMICO DE TODOS LOS SETUPS -->
+        <div class="grid-setups" id="setups-container"></div>
+
+        <!-- IMÁGENES SECUNDARIAS -->
+        <div class="grid-images">
+            <div class="card img-card" id="card-img1" style="display:none;">
+                <div class="card-header" id="disp-img1-title" style="color:#fff;">Imagen 1</div>
+                <img id="el-img1" src="" alt="Cargando...">
+            </div>
+            <div class="card img-card" id="card-img2" style="display:none;">
+                <div class="card-header" id="disp-img2-title" style="color:#fff;">Imagen 2</div>
+                <img id="el-img2" src="" alt="Cargando...">
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Configuración inicial por defecto (soporta un array dinámico de setups)
+        let config = JSON.parse(localStorage.getItem('obs_config_multi')) || {
+            obsName: 'Periconet',
+            setups: [
+                { name: 'RC 8', ninaIp: '192.168.191.19', ninaPort: '1888', phd2Ip: '192.168.191.19', phd2Port: '4400' }
+            ],
+            img1Title: "Voldemort d'Àger",
+            img1Url: '',
+            img2Title: 'Allsky AstroZapo',
+            img2Url: ''
+        };
+
+        function initUI() {
+            document.getElementById('cfg-obs-name').value = config.obsName;
+            document.getElementById('cfg-img1-title').value = config.img1Title;
+            document.getElementById('cfg-img1-url').value = config.img1Url;
+            document.getElementById('cfg-img2-title').value = config.img2Title;
+            document.getElementById('cfg-img2-url').value = config.img2Url;
+
+            document.getElementById('obs-title').innerText = config.obsName;
+
+            renderSetupForms();
+            renderSetupCards();
+            updateExtraImages();
+            fetchAllData();
+        }
+
+        // Renderiza el formulario de configuración dinámico para cada setup
+        function renderSetupForms() {
+            const container = document.getElementById('setups-config-list');
+            container.innerHTML = '';
+            config.setups.forEach((setup, idx) => {
+                const block = document.createElement('div');
+                block.className = 'setup-config-block';
+                block.innerHTML = `
+                    <button class="btn-del" onclick="removeSetupForm(${idx})">Eliminar</button>
+                    <div class="form-group">
+                        <label>Nombre del Setup #${idx + 1}</label>
+                        <input type="text" class="cfg-s-name" value="${setup.name}">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="form-group" style="flex:2;">
+                            <label>IP NINA</label>
+                            <input type="text" class="cfg-s-nina-ip" value="${setup.ninaIp}">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>Puerto NINA</label>
+                            <input type="text" class="cfg-s-nina-port" value="${setup.ninaPort}">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="form-group" style="flex:2;">
+                            <label>IP PHD2</label>
+                            <input type="text" class="cfg-s-phd2-ip" value="${setup.phd2Ip}">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>Puerto PHD2</label>
+                            <input type="text" class="cfg-s-phd2-port" value="${setup.phd2Port}">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(block);
+            });
+        }
+
+        function addSetupForm() {
+            config.setups.push({ name: `Setup ${config.setups.length + 1}`, ninaIp: '192.168.1.100', ninaPort: '1888', phd2Ip: '192.168.1.100', phd2Port: '4400' });
+            renderSetupForms();
+        }
+
+        function removeSetupForm(idx) {
+            if (config.setups.length <= 1) return alert("Debes tener al menos un setup.");
+            config.setups.splice(idx, 1);
+            renderSetupForms();
+        }
+
+        // Renderiza las tarjetas visuales en el dashboard
+        function renderSetupCards() {
+            const container = document.getElementById('setups-container');
+            container.innerHTML = '';
+            config.setups.forEach((setup, idx) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.id = `card-setup-${idx}`;
+                card.innerHTML = `
+                    <div class="card-header">${setup.name}</div>
+                    <div class="preview-box" id="disp-cam-img-${idx}">Sin Imagen</div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-label">Temp. Cámara:</span>
+                        <span class="telemetry-val" id="val-temp-cam-${idx}">-- °C</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-label">Guiado RMS (PHD2):</span>
+                        <span class="telemetry-val" id="val-phd2-rms-${idx}">-- px</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-label">Estado Guiado:</span>
+                        <span class="telemetry-val" id="val-phd2-state-${idx}">--</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-label">Temp. Ambiente:</span>
+                        <span class="telemetry-val" id="val-temp-amb-${idx}">-- °C</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-label">Humedad:</span>
+                        <span class="telemetry-val" id="val-hum-${idx}">-- %</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleConfig() {
+            const panel = document.getElementById('config-panel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function saveConfig() {
+            const names = document.querySelectorAll('.cfg-s-name');
+            const ninaIps = document.querySelectorAll('.cfg-s-nina-ip');
+            const ninaPorts = document.querySelectorAll('.cfg-s-nina-port');
+            const phd2Ips = document.querySelectorAll('.cfg-s-phd2-ip');
+            const phd2Ports = document.querySelectorAll('.cfg-s-phd2-port');
+
+            const updatedSetups = [];
+            names.forEach((_, i) => {
+                updatedSetups.push({
+                    name: names[i].value,
+                    ninaIp: ninaIps[i].value,
+                    ninaPort: ninaPorts[i].value,
+                    phd2Ip: phd2Ips[i].value,
+                    phd2Port: phd2Ports[i].value
+                });
+            });
+
+            config = {
+                obsName: document.getElementById('cfg-obs-name').value,
+                setups: updatedSetups,
+                img1Title: document.getElementById('cfg-img1-title').value,
+                img1Url: document.getElementById('cfg-img1-url').value,
+                img2Title: document.getElementById('cfg-img2-title').value,
+                img2Url: document.getElementById('cfg-img2-url').value
+            };
+
+            localStorage.setItem('obs_config_multi', JSON.stringify(config));
+            toggleConfig();
+            initUI();
+        }
+
+        // Bucle para consultar APIs de todos los setups en paralelo
+        async function fetchAllData() {
+            config.setups.forEach(async (setup, idx) => {
+                // N.I.N.A. API
+                if (setup.ninaIp && setup.ninaPort) {
+                    const ninaBase = `http://${setup.ninaIp}:${setup.ninaPort}/api/v1`;
+                    try {
+                        const camRes = await fetch(`${ninaBase}/equipment/camera/info`);
+                        if (camRes.ok) {
+                            const camData = await camRes.json();
+                            if (camData.Success && camData.Response) {
+                                document.getElementById(`val-temp-cam-${idx}`).innerText = (camData.Response.Temperature || '--') + ' °C';
+                            }
+                        }
+
+                        const weatherRes = await fetch(`${ninaBase}/equipment/weather/info`);
+                        if (weatherRes.ok) {
+                            const wData = await weatherRes.json();
+                            if (wData.Success && wData.Response) {
+                                document.getElementById(`val-temp-amb-${idx}`).innerText = (wData.Response.Temperature || '--') + ' °C';
+                                document.getElementById(`val-hum-${idx}`).innerText = (wData.Response.Humidity || '--') + ' %';
+                            }
+                        }
+
+                        const imgEl = document.getElementById(`disp-cam-img-${idx}`);
+                        imgEl.innerHTML = `<img src="${ninaBase}/image/current?t=${new Date().getTime()}" alt="Captura ${setup.name}">`;
+                    } catch (e) {
+                        console.warn(`Error conectando a NINA en ${setup.name}:`, e);
+                    }
+                }
+
+                // PHD2 JSON-RPC API
+                if (setup.phd2Ip && setup.phd2Port) {
+                    const phd2Url = `http://${setup.phd2Ip}:${setup.phd2Port}/`;
+                    try {
+                        const phdRes = await fetch(phd2Url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ "jsonrpc": "2.0", "method": "get_app_state", "id": 1 })
+                        });
+                        if (phdRes.ok) {
+                            const json = await phdRes.json();
+                            if (json.result) document.getElementById(`val-phd2-state-${idx}`).innerText = json.result;
+                        }
+
+                        const statsRes = await fetch(phd2Url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ "jsonrpc": "2.0", "method": "get_stats", "id": 2 })
+                        });
+                        if (statsRes.ok) {
+                            const statsJson = await statsRes.json();
+                            if (statsJson.result && statsJson.result.total) {
+                                document.getElementById(`val-phd2-rms-${idx}`).innerText = Number(statsJson.result.total).toFixed(2) + ' px';
+                            }
+                        }
+                    } catch (e) {
+                        document.getElementById(`val-phd2-state-${idx}`).innerText = "Desconectado";
+                    }
+                }
+            });
+        }
+
+        function updateExtraImages() {
+            if (config.img1Url) {
+                document.getElementById('card-img1').style.display = 'block';
+                document.getElementById('disp-img1-title').innerText = config.img1Title;
+                document.getElementById('el-img1').src = `${config.img1Url}?t=${new Date().getTime()}`;
+            }
+            if (config.img2Url) {
+                document.getElementById('card-img2').style.display = 'block';
+                document.getElementById('disp-img2-title').innerText = config.img2Title;
+                document.getElementById('el-img2').src = `${config.img2Url}?t=${new Date().getTime()}`;
+            }
+        }
+
+        setInterval(fetchAllData, 10000);
+        setInterval(updateExtraImages, 30000);
+
+        window.onload = initUI;
+    </script>
+</body>
+</html>
